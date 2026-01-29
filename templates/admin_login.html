@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block body %}
+<!-- Contact Section -->
+<section id="contact" class="contact section">
+
+  <!-- Section Title -->
+  <div class="container section-title" data-aos="fade-up">
+    <h2>Admin Login Here</h2>
+  </div><!-- End Section Title -->
+
+  <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+    <div class="row gy-4">
+
+      <div class="col-lg-5">
+        <div class="info-wrap text-center">
+          <img src="{% static 'assets/img/login.jpg' %}" alt="Login Image" width="300px" class="img-fluid rounded shadow">
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <form action="" method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="row gy-4">
+
+            <div class="col-md-12">
+              <label class="pb-2">Username</label>
+              <input type="text" name="username" id="username" class="form-control" required>
+            </div>
+
+            <div class="col-md-12">
+              <label class="pb-2">Password</label>
+              <input type="password" name="password" id="password" class="form-control" required>
+            </div>
+
+            <div class="col-md-12 text-center">
+              <button type="submit" style="background-color: #10bc69; color: white; padding: 10px 25px; border-radius: 10px; border: none;">
+                Login Here
+              </button>
+            </div>
+
+          </div>
+        </form>
+      </div><!-- End Contact Form -->
+
+    </div>
+
+  </div>
+
+</section><!-- /Contact Section -->
+{% endblock body %}

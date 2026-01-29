@@ -1,0 +1,2013 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediCare - Doctor Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Bootstrap Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+    />
+    <!-- ZXing Library for QR Scanning -->
+    <script src="https://unpkg.com/@zxing/library@0.19.1"></script>
+
+    <style>
+      :root {
+        --primary-color: #0cb76b;
+        --primary-dark: #09995a;
+        --secondary-color: #2c3e50;
+        --light-bg: #f8f9fa;
+        --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --hover-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+      }
+
+      body {
+        background-color: var(--light-bg);
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      .sidebar {
+        min-height: 100vh;
+        background: linear-gradient(
+          180deg,
+          var(--primary-color),
+          var(--primary-dark)
+        );
+        color: white;
+        padding-top: 1rem;
+        box-shadow: 3px 0 15px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+      }
+
+      .sidebar .brand {
+        padding: 1.5rem 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        margin-bottom: 1rem;
+      }
+
+      .sidebar .brand h4 {
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .sidebar .nav-item {
+        margin-bottom: 0.5rem;
+      }
+
+      .sidebar .nav-link {
+        color: white;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin: 0 0.5rem;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+      }
+
+      .sidebar .nav-link:hover,
+      .sidebar .nav-link.active {
+        background: rgba(255, 255, 255, 0.15);
+        border-left: 4px solid #fff;
+      }
+
+      .sidebar .nav-link i {
+        font-size: 1.1rem;
+        width: 24px;
+        text-align: center;
+      }
+
+      .content-section {
+        display: none;
+        animation: fadeIn 0.5s ease;
+      }
+
+      .content-section.active {
+        display: block;
+      }
+
+      .page-header {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--card-shadow);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .stats-card {
+        background: white;
+        color: var(--secondary-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--card-shadow);
+        transition: transform 0.3s, box-shadow 0.3s;
+        border-left: 4px solid var(--primary-color);
+        height: 100%;
+      }
+
+      .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--hover-shadow);
+      }
+
+      .stats-card .card-icon {
+        font-size: 2.5rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+      }
+
+      .stats-card h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+
+      .stats-card h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+      }
+
+      .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: var(--card-shadow);
+        transition: transform 0.3s, box-shadow 0.3s;
+        margin-bottom: 1.5rem;
+      }
+
+      .card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--hover-shadow);
+      }
+
+      .card-header {
+        font-weight: 600;
+        font-size: 1.1rem;
+        background: white;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1rem 1.5rem;
+        border-radius: 12px 12px 0 0 !important;
+      }
+
+      .table-responsive {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+      }
+
+      .table thead {
+        background: linear-gradient(
+          45deg,
+          var(--primary-color),
+          var(--primary-dark)
+        );
+        color: white;
+      }
+
+      .table th {
+        border: none;
+        padding: 1rem;
+        font-weight: 600;
+      }
+
+      .table td {
+        padding: 1rem;
+        vertical-align: middle;
+      }
+
+      .table tbody tr {
+        transition: background-color 0.2s;
+      }
+
+      .table tbody tr:hover {
+        background-color: rgba(12, 183, 107, 0.05);
+      }
+
+      .btn {
+        border-radius: 8px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s;
+      }
+
+      .btn-primary {
+        background: var(--primary-color);
+        border: none;
+      }
+
+      .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+      }
+
+      .btn-success {
+        background: var(--primary-color);
+        border: none;
+      }
+
+      .btn-success:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+      }
+
+      .user-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid var(--primary-color);
+      }
+
+      .mobile-menu-btn {
+        background: var(--primary-color);
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 1rem;
+      }
+
+      .doctor-badge {
+        background: linear-gradient(
+          45deg,
+          var(--primary-color),
+          var(--primary-dark)
+        );
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+      }
+
+      .info-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      .info-item:last-child {
+        border-bottom: none;
+      }
+
+      /* QR Scanner Styles */
+      #qr-video {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+        border-radius: 10px;
+        border: 2px solid #dee2e6;
+        background-color: #000;
+      }
+
+      #qr-canvas {
+        display: none;
+      }
+
+      .camera-controls {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        justify-content: center;
+      }
+
+      .patient-info-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-left: 4px solid var(--primary-color);
+      }
+
+      .hash-verification-container {
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      .verification-result {
+        display: none;
+        margin-top: 2rem;
+      }
+
+      /* Patient Update Form Styles */
+      .patient-update-form {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: var(--card-shadow);
+      }
+
+      .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+      }
+
+      .form-section:last-child {
+        border-bottom: none;
+      }
+
+      .form-section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--secondary-color);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--primary-color);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .form-label {
+        font-weight: 600;
+        color: var(--secondary-color);
+        margin-bottom: 0.5rem;
+      }
+
+      .form-control,
+      .form-select {
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        border: 1px solid #dee2e6;
+        transition: all 0.3s;
+      }
+
+      .form-control:focus,
+      .form-select:focus {
+        box-shadow: 0 0 0 0.25rem rgba(12, 183, 107, 0.25);
+        border-color: var(--primary-color);
+      }
+
+      .prescription-image-preview {
+        max-width: 200px;
+        max-height: 200px;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        margin-top: 1rem;
+        display: none;
+      }
+
+      .patient-selector {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--card-shadow);
+        margin-bottom: 1.5rem;
+      }
+
+      .patient-card {
+        border: 2px solid transparent;
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.3s;
+        cursor: pointer;
+        margin-bottom: 1rem;
+      }
+
+      .patient-card:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-3px);
+        box-shadow: var(--hover-shadow);
+      }
+
+      .patient-card.selected {
+        border-color: var(--primary-color);
+        background-color: rgba(12, 183, 107, 0.05);
+      }
+
+      .patient-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--primary-color);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Camera Debug Info */
+      .debug-info {
+        font-size: 12px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 5px;
+        margin-top: 10px;
+      }
+
+      /* Mobile Responsive */
+      @media (max-width: 768px) {
+        .sidebar {
+          position: fixed;
+          transform: translateX(-100%);
+          transition: transform 0.3s ease;
+        }
+
+        .sidebar.show {
+          transform: translateX(0);
+        }
+
+        .stats-card h2 {
+          font-size: 1.5rem;
+        }
+
+        .page-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 1rem;
+        }
+
+        .mobile-table-container {
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .mobile-table {
+          min-width: 600px;
+        }
+
+        .mobile-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.25rem;
+        }
+
+        .mobile-actions .btn {
+          flex: 1;
+          min-width: 60px;
+          padding: 0.4rem 0.5rem;
+          font-size: 0.8rem;
+        }
+
+        .user-avatar {
+          width: 80px;
+          height: 80px;
+        }
+
+        .patient-update-form {
+          padding: 1.5rem;
+        }
+
+        #qr-video {
+          height: 250px;
+        }
+      }
+
+      @media (max-width: 991px) {
+        .stats-card {
+          text-align: center;
+          padding: 1.25rem;
+        }
+
+        .stats-card .card-icon {
+          margin: 0 auto 0.75rem auto;
+        }
+
+        .page-header {
+          flex-direction: column;
+          align-items: flex-start;
+          text-align: center;
+          gap: 0.75rem;
+        }
+
+        .page-header .d-flex {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Messages Display -->
+    {% if messages %}
+    <div
+      class="alert-container"
+      style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+      "
+    >
+      {% for message in messages %}
+      <div
+        class="alert alert-{{ message.tags }} alert-dismissible fade show"
+        role="alert"
+      >
+        {{ message }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+        ></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="container-fluid">
+      <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block sidebar" id="sidebarMenu">
+          <div class="brand">
+            <h4><i class="bi bi-heart-pulse"></i> MediCare Doctor</h4>
+          </div>
+          <div class="nav flex-column">
+            <a
+              class="nav-link active"
+              onclick="showSection('dashboard', event)"
+            >
+              <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+            <a class="nav-link" onclick="showSection('profile', event)">
+              <i class="bi bi-person-badge"></i> My Profile
+            </a>
+            <a class="nav-link" onclick="showSection('patients', event)">
+              <i class="bi bi-people"></i> My Patients
+            </a>
+            <a class="nav-link" onclick="showSection('check-patient', event)">
+              <i class="bi bi-clipboard-check"></i> Check Patient
+            </a>
+            <a class="nav-link" onclick="showSection('appointments', event)">
+              <i class="bi bi-calendar-check"></i> Appointments
+            </a>
+            <a class="nav-link" onclick="showSection('schedule', event)">
+              <i class="bi bi-clock"></i> Schedule
+            </a>
+            <a class="nav-link" onclick="showSection('updated-records', event)">
+              <i class="bi bi-clock-history"></i> Updated Records
+            </a>
+
+            <a class="nav-link text-danger" href="{% url 'log_out' %}">
+              <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+          </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+          <!-- Mobile Sidebar Toggle -->
+          <button
+            class="mobile-menu-btn d-md-none mb-3"
+            type="button"
+            onclick="toggleSidebar()"
+          >
+            <i class="bi bi-list"></i> Menu
+          </button>
+
+          <!-- Dashboard Section -->
+          <div id="dashboard" class="content-section active">
+            <div class="page-header">
+              <h2 class="mb-0">Doctor Dashboard</h2>
+              <div class="d-flex align-items-center gap-3">
+                <span class="fw-semibold d-none d-md-block"
+                  >Welcome, Dr. {{ doctor.full_name }}</span
+                >
+                <div class="dropdown">
+                  <button
+                    class="btn btn-outline-secondary dropdown-toggle"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                  >
+                    <i class="bi bi-person-circle me-2"></i> Account
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                      <a
+                        class="dropdown-item"
+                        onclick="showSection('profile', event)"
+                        ><i class="bi bi-person me-2"></i> Profile</a
+                      >
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="#"
+                        ><i class="bi bi-gear me-2"></i> Settings</a
+                      >
+                    </li>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li>
+                      <a
+                        class="dropdown-item text-danger"
+                        href="{% url 'log_out' %}"
+                        ><i class="bi bi-box-arrow-right me-2"></i> Logout</a
+                      >
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="row g-3 g-md-4 mb-4">
+              <div class="col-12 col-md-3">
+                <div class="stats-card text-center text-md-start">
+                  <div class="card-icon mx-auto mx-md-0">
+                    <i class="bi bi-people"></i>
+                  </div>
+                  <h3>Total Patients</h3>
+                  <h2>24</h2>
+                  <p class="text-muted mb-0">Under care</p>
+                </div>
+              </div>
+              <div class="col-12 col-md-3">
+                <div class="stats-card text-center text-md-start">
+                  <div class="card-icon mx-auto mx-md-0">
+                    <i class="bi bi-calendar-check"></i>
+                  </div>
+                  <h3>Today's Appointments</h3>
+                  <h2>8</h2>
+                  <p class="text-muted mb-0">Scheduled</p>
+                </div>
+              </div>
+              <div class="col-12 col-md-3">
+                <div class="stats-card text-center text-md-start">
+                  <div class="card-icon mx-auto mx-md-0">
+                    <i class="bi bi-clock-history"></i>
+                  </div>
+                  <h3>Pending Reviews</h3>
+                  <h2>5</h2>
+                  <p class="text-muted mb-0">Awaiting action</p>
+                </div>
+              </div>
+              <div class="col-12 col-md-3">
+                <div class="stats-card text-center text-md-start">
+                  <div class="card-icon mx-auto mx-md-0">
+                    <i class="bi bi-star"></i>
+                  </div>
+                  <h3>Satisfaction Rate</h3>
+                  <h2>98%</h2>
+                  <p class="text-muted mb-0">Patient feedback</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Today's Overview -->
+            <div class="row">
+              <div class="col-12 col-lg-6">
+                <div class="card">
+                  <div class="card-header">
+                    <h5 class="mb-0">Today's Schedule</h5>
+                  </div>
+                  <div class="card-body">
+                    <div class="schedule-list">
+                      <div class="d-flex align-items-center p-3 border-bottom">
+                        <div class="bg-primary text-white rounded p-2 me-3">
+                          <i class="bi bi-clock"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                          <h6 class="mb-1">Morning Consultation</h6>
+                          <small class="text-muted">9:00 AM - 12:00 PM</small>
+                        </div>
+                        <span class="badge bg-success">Active</span>
+                      </div>
+                      <div class="d-flex align-items-center p-3">
+                        <div class="bg-warning text-white rounded p-2 me-3">
+                          <i class="bi bi-briefcase"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                          <h6 class="mb-1">Surgery - Room 204</h6>
+                          <small class="text-muted">1:00 PM - 3:00 PM</small>
+                        </div>
+                        <span class="badge bg-warning">Upcoming</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-lg-6">
+                <div class="card">
+                  <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                  </div>
+                  <div class="card-body">
+                    <div class="row g-2">
+                      <div class="col-6">
+                        <button
+                          class="btn btn-outline-primary w-100"
+                          onclick="showSection('patients', event)"
+                        >
+                          <i class="bi bi-plus-circle me-2"></i>New Patient
+                        </button>
+                      </div>
+                      <div class="col-6">
+                        <button
+                          class="btn btn-outline-success w-100"
+                          onclick="showSection('appointments', event)"
+                        >
+                          <i class="bi bi-calendar-plus me-2"></i>Add
+                          Appointment
+                        </button>
+                      </div>
+                      <div class="col-6">
+                        <button
+                          class="btn btn-outline-info w-100"
+                          onclick="showSection('check-patient', event)"
+                        >
+                          <i class="bi bi-prescription me-2"></i>Write
+                          Prescription
+                        </button>
+                      </div>
+                      <div class="col-6">
+                        <button class="btn btn-outline-warning w-100">
+                          <i class="bi bi-file-medical me-2"></i>Medical Report
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profile Section -->
+          <div id="profile" class="content-section">
+            <div class="page-header">
+              <h2 class="mb-0">My Profile</h2>
+              <button class="btn btn-primary">
+                <i class="bi bi-pencil me-2"></i>Edit Profile
+              </button>
+            </div>
+
+            <div class="row">
+              <div class="col-12 col-lg-4">
+                <div class="card">
+                  <div class="card-header">
+                    <h5 class="mb-0">Professional Photo</h5>
+                  </div>
+                  <div class="card-body text-center">
+                    {% if doctor.photo %}
+                    <img
+                      src="{{ doctor.photo.url }}"
+                      alt="Doctor Photo"
+                      class="user-avatar mb-3"
+                    />
+                    {% else %}
+                    <div
+                      class="user-avatar mx-auto d-flex align-items-center justify-content-center bg-light mb-3"
+                    >
+                      <i
+                        class="bi bi-person-circle"
+                        style="font-size: 3rem; color: #6c757d"
+                      ></i>
+                    </div>
+                    {% endif %}
+                    <h4>Dr. {{ doctor.full_name }}</h4>
+                    <span class="doctor-badge"
+                      >{{ doctor.specialization }}</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-lg-8">
+                <div class="card">
+                  <div class="card-header">
+                    <h5 class="mb-0">Professional Information</h5>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-md-6 mb-3">
+                        <label class="form-label"
+                          ><strong>Full Name</strong></label
+                        >
+                        <p>Dr. {{ doctor.full_name }}</p>
+                      </div>
+                      <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Email</strong></label>
+                        <p>{{ doctor.email }}</p>
+                      </div>
+                      <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Phone</strong></label>
+                        <p>{{ doctor.phone }}</p>
+                      </div>
+                      <div class="col-md-6 mb-3">
+                        <label class="form-label"
+                          ><strong>Specialization</strong></label
+                        >
+                        <p>{{ doctor.specialization }}</p>
+                      </div>
+                      <div class="col-12 mb-3">
+                        <label class="form-label"
+                          ><strong>Experience</strong></label
+                        >
+                        <p>{{ doctor.experience }} years</p>
+                      </div>
+                      <div class="col-12 mb-3">
+                        <label class="form-label"
+                          ><strong>Member Since</strong></label
+                        >
+                        <p>{{ doctor.created_at|date:"M d, Y" }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Patients Section -->
+          <div id="patients" class="content-section">
+            <div class="page-header">
+              <h2 class="mb-0">My Patients</h2>
+              <button class="btn btn-primary">
+                <i class="bi bi-person-plus me-2"></i>Add New Patient
+              </button>
+            </div>
+
+            <!-- Pending Patient Requests -->
+            <div class="card mb-4">
+              <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                  <i class="bi bi-bell me-2"></i>Pending Patient Requests
+                </h5>
+              </div>
+              <div class="card-body">
+                {% if pending_requests %}
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>Patient Name</th>
+                        <th>Email</th>
+                        <th>Request Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for req in pending_requests %}
+                      <tr>
+                        <td>{{ req.patient.full_name }}</td>
+                        <td>{{ req.patient.email }}</td>
+                        <td>{{ req.created_at|date:"M d, Y" }}</td>
+                        <td><span class="badge bg-warning">Pending</span></td>
+                        <td>
+                          <div class="btn-group">
+                            <a
+                              href="{% url 'accept_request' req.id %}"
+                              class="btn btn-sm btn-success"
+                            >
+                              <i class="bi bi-check-circle"></i> Accept
+                            </a>
+                            <a
+                              href="{% url 'reject_request' req.id %}"
+                              class="btn btn-sm btn-danger"
+                            >
+                              <i class="bi bi-x-circle"></i> Reject
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">
+                  No pending patient requests
+                </p>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Accepted Patients -->
+            <div class="card">
+              <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                  <i class="bi bi-person-check me-2"></i>Accepted Patients
+                </h5>
+              </div>
+              <div class="card-body">
+                {% if accepted_requests %}
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>Patient Name</th>
+                        <th>Email</th>
+                        <th>Disease/Condition</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for req in accepted_requests %}
+                      <tr>
+                        <td>{{ req.patient.full_name }}</td>
+                        <td>{{ req.patient.email }}</td>
+                        <td>
+                          {{ req.patient.disease|default:"Not specified" }}
+                        </td>
+                        <td><span class="badge bg-success">Accepted</span></td>
+                        <td>
+                          {% if req.patient.blockchain_hash %}
+                          <a
+                            href="{% url 'patient_info' req.patient.id %}"
+                            class="btn btn-sm btn-primary"
+                          >
+                            <i class="bi bi-qr-code me-1"></i>View QR & Hash
+                          </a>
+                          {% else %}
+                          <span class="text-muted"
+                            >Waiting for patient data</span
+                          >
+                          {% endif %}
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">
+                  No accepted patients yet
+                </p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Check Patient Section -->
+          <div id="check-patient" class="content-section">
+            <div class="page-header">
+              <h2 class="mb-0">Check Patient</h2>
+              <button type="submit" class="btn btn-success">
+                <i class="bi bi-save me-2"></i>Save Patient Record
+              </button>
+            </div>
+
+            <!-- Patient Selection -->
+            <div class="patient-selector">
+              <h5 class="mb-3">
+                <i class="bi bi-person me-2"></i>Select a Patient
+              </h5>
+              <div class="row">
+                {% if accepted_requests %} {% for req in accepted_requests %}
+                <div class="col-md-6 col-lg-4">
+                  <div
+                    class="patient-card"
+                    onclick="selectPatient('{{ req.patient.id }}', '{{ req.patient.full_name }}')"
+                    id="patient-card-{{ req.patient.id }}"
+                  >
+                    <div class="d-flex align-items-center">
+                      {% if req.patient.photo %}
+                      <img
+                        src="{{ req.patient.photo.url }}"
+                        alt="Patient Photo"
+                        class="patient-avatar me-3"
+                      />
+                      {% else %}
+                      <div
+                        class="patient-avatar bg-light d-flex align-items-center justify-content-center me-3"
+                      >
+                        <i
+                          class="bi bi-person"
+                          style="font-size: 1.5rem; color: #6c757d"
+                        ></i>
+                      </div>
+                      {% endif %}
+                      <div>
+                        <h6 class="mb-1">{{ req.patient.full_name }}</h6>
+                        <p class="text-muted mb-0">{{ req.patient.email }}</p>
+                        <small class="text-muted"
+                          >{{ req.patient.disease|default:"No condition
+                          specified" }}</small
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {% endfor %} {% else %}
+                <div class="col-12">
+                  <div class="alert alert-info text-center">
+                    <i class="bi bi-info-circle me-2"></i>
+                    You don't have any accepted patients yet. Accept patient
+                    requests to start managing their records.
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Patient Update Form -->
+            <div
+              class="patient-update-form"
+              id="patient-update-form"
+              style="display: none"
+            >
+              <h4 class="mb-4" id="patient-form-title">
+                Update Patient Record
+              </h4>
+
+              <form
+                id="patient-record-form"
+                action="{% url 'save_patient_record' %}"
+                method="POST"
+                enctype="multipart/formdata"
+              >
+                {% csrf_token %}
+                <input type="hidden" id="patient_id" name="patient_id" />
+                <input
+                  type="hidden"
+                  id="doctor_id"
+                  name="doctor_id"
+                  value="{{ doctor.id }}"
+                />
+
+                <!-- Visit Information -->
+                <div class="form-section">
+                  <h5 class="form-section-title">
+                    <i class="bi bi-calendar-event"></i>Visit Information
+                  </h5>
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label for="visit_date" class="form-label"
+                        >Visit Date</label
+                      >
+                      <input
+                        type="date"
+                        class="form-control"
+                        id="visit_date"
+                        name="visit_date"
+                        required
+                      />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label for="follow_up_date" class="form-label"
+                        >Follow-up Date</label
+                      >
+                      <input
+                        type="date"
+                        class="form-control"
+                        id="follow_up_date"
+                        name="follow_up_date"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Symptoms & Diagnosis -->
+                <div class="form-section">
+                  <h5 class="form-section-title">
+                    <i class="bi bi-clipboard-pulse"></i>Symptoms & Diagnosis
+                  </h5>
+                  <div class="row">
+                    <div class="col-12 mb-3">
+                      <label for="symptoms" class="form-label">Symptoms</label>
+                      <textarea
+                        class="form-control"
+                        id="symptoms"
+                        name="symptoms"
+                        rows="3"
+                        placeholder="Describe patient symptoms..."
+                      ></textarea>
+                    </div>
+                    <div class="col-12 mb-3">
+                      <label for="diagnosis" class="form-label"
+                        >Diagnosis</label
+                      >
+                      <textarea
+                        class="form-control"
+                        id="diagnosis"
+                        name="diagnosis"
+                        rows="3"
+                        placeholder="Enter diagnosis..."
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tests & Prescription -->
+                <div class="form-section">
+                  <h5 class="form-section-title">
+                    <i class="bi bi-file-medical"></i>Tests & Prescription
+                  </h5>
+                  <div class="row">
+                    <div class="col-12 mb-3">
+                      <label for="tests" class="form-label"
+                        >Recommended Tests</label
+                      >
+                      <textarea
+                        class="form-control"
+                        id="tests"
+                        name="tests"
+                        rows="2"
+                        placeholder="List recommended tests..."
+                      ></textarea>
+                    </div>
+                    <div class="col-12 mb-3">
+                      <label for="prescription" class="form-label"
+                        >Prescription</label
+                      >
+                      <textarea
+                        class="form-control"
+                        id="prescription"
+                        name="prescription"
+                        rows="4"
+                        placeholder="Write prescription details..."
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Additional Notes & Prescription Image -->
+                <div class="form-section">
+                  <h5 class="form-section-title">
+                    <i class="bi bi-sticky"></i>Additional Information
+                  </h5>
+                  <div class="row">
+                    <div class="col-12 mb-3">
+                      <label for="notes" class="form-label"
+                        >Doctor's Notes</label
+                      >
+                      <textarea
+                        class="form-control"
+                        id="notes"
+                        name="notes"
+                        rows="3"
+                        placeholder="Add any additional notes..."
+                      ></textarea>
+                    </div>
+                    <div class="col-12 mb-3">
+                      <label for="prescription_image" class="form-label"
+                        >Prescription Image (PNG/JPG)</label
+                      >
+                      <input
+                        type="file"
+                        class="form-control"
+                        id="prescription_image"
+                        name="prescription_image"
+                        accept=".png,.jpg,.jpeg"
+                      />
+                      <div class="form-text">
+                        Upload an image of the written prescription (optional)
+                      </div>
+                      <img
+                        id="prescription-image-preview"
+                        class="prescription-image-preview"
+                        alt="Prescription Preview"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                  <button type="reset" class="btn btn-outline-secondary">
+                    Reset Form
+                  </button>
+                  <button type="submit" class="btn btn-success">
+                    <i class="bi bi-save me-2"></i>Save Patient Record
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Appointments Section - QR Scanner (CAMERA BASED) -->
+          <div id="appointments" class="content-section">
+            <div class="page-header">
+              <h2 class="mb-0">QR Code Scanner (Camera)</h2>
+              <button class="btn btn-info" onclick="checkCameraSupport()">
+                <i class="bi bi-camera me-2"></i>Check Camera
+              </button>
+            </div>
+
+            <div class="row">
+              <!-- CAMERA VIEW -->
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                      <i class="bi bi-camera-video me-2"></i>Live Camera Scan
+                    </h5>
+                  </div>
+                  <div class="card-body text-center">
+                    <div id="scanner-container">
+                      <video id="qr-video" muted playsinline></video>
+                    </div>
+
+                    <div class="camera-controls">
+                      <button class="btn btn-success" onclick="startScanner()">
+                        <i class="bi bi-play-circle me-2"></i>Start Scanner
+                      </button>
+                      <button class="btn btn-danger" onclick="stopScanner()">
+                        <i class="bi bi-stop-circle me-2"></i>Stop Scanner
+                      </button>
+                    </div>
+
+                    <div class="mt-3">
+                      <select id="camera-select" class="form-select">
+                        <option value="">Select Camera</option>
+                      </select>
+                    </div>
+
+                    <!-- Camera Debug Info -->
+                    <div id="camera-debug" class="debug-info mt-3"></div>
+
+                    <small class="text-muted d-block mt-2">
+                      Hold patient QR in front of camera
+                    </small>
+                  </div>
+                </div>
+              </div>
+
+              <!-- RESULT VIEW -->
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                      <i class="bi bi-person-badge me-2"></i>Patient Information
+                    </h5>
+                  </div>
+                  <div class="card-body">
+                    <div id="scanner-results">
+                      <div class="text-center text-muted">
+                        <i class="bi bi-qr-code display-4 mb-3"></i>
+                        <p>Scan a QR code to view patient data</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Schedule Section - Hash Verification -->
+          <div id="schedule" class="content-section">
+            <div class="page-header">
+              <h2 class="mb-0">Hash Verification</h2>
+              <button class="btn btn-primary" onclick="verifyHash()">
+                <i class="bi bi-shield-check me-2"></i>Verify Hash
+              </button>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">Verify Patient Data on Blockchain</h5>
+              </div>
+              <div class="card-body">
+                <div class="hash-verification-container">
+                  <div class="text-center mb-4">
+                    <i
+                      class="bi bi-shield-lock text-primary"
+                      style="font-size: 3rem"
+                    ></i>
+                    <h4 class="mt-2">Blockchain Hash Verification</h4>
+                    <p class="text-muted">
+                      Enter patient hash to verify data integrity on blockchain
+                    </p>
+                  </div>
+
+                  <div class="mb-4">
+                    <label for="patientHash" class="form-label"
+                      ><strong>Patient Blockchain Hash</strong></label
+                    >
+                    <input
+                      type="text"
+                      class="form-control form-control-lg"
+                      id="patientHash"
+                      placeholder="Enter patient's blockchain hash..."
+                      style="font-family: monospace"
+                    />
+                    <div class="form-text">
+                      Enter the 64-character SHA-256 hash from patient's QR code
+                    </div>
+                  </div>
+
+                  <div class="d-grid gap-2">
+                    <button
+                      class="btn btn-success btn-lg"
+                      onclick="verifyHash()"
+                    >
+                      <i class="bi bi-search me-2"></i>Verify on Blockchain
+                    </button>
+                  </div>
+
+                  <div id="verification-result" class="verification-result">
+                    <!-- Results will be displayed here -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Updated Records Section -->
+          <div id="updated-records" class="content-section">
+            <div class="page-header">
+              <h2 class="mb-0">Updated Patient Records</h2>
+            </div>
+
+            <div class="card">
+              <div
+                class="card-header bg-info text-white d-flex justify-content-between align-items-center"
+              >
+                <h5 class="mb-0">
+                  <i class="bi bi-clock-history me-2"></i> Recent Updated
+                  Records
+                </h5>
+
+                <!-- Legend -->
+                <span class="badge bg-light text-dark"
+                  >Latest doctor-updated QR + Blockchain Hash</span
+                >
+              </div>
+
+              <div class="card-body">
+                {% if visits %}
+                <div class="table-responsive">
+                  <table class="table table-striped align-middle">
+                    <thead>
+                      <tr>
+                        <th>Patient</th>
+                        <th>Visit Date</th>
+                        <th>Diagnosis</th>
+                        <th>QR Code</th>
+                        <th>Blockchain Hash</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {% for v in visits %}
+                      <tr>
+                        <td>{{ v.patient.full_name }}</td>
+
+                        <td>{{ v.visit_date|date:"M d, Y" }}</td>
+
+                        <td>{{ v.diagnosis|default:"N/A" }}</td>
+
+                        <td>
+                          {% if v.qr_code %}
+                          <img
+                            src="{{ v.qr_code.url }}"
+                            width="80"
+                            class="rounded border"
+                          />
+                          {% else %}
+                          <span class="text-muted">No QR</span>
+                          {% endif %}
+                        </td>
+
+                        <td
+                          class="font-monospace"
+                          style="
+                            font-size: 12px;
+                            max-width: 200px;
+                            word-break: break-all;
+                          "
+                        >
+                          {{ v.blockchain_hash|default:"-" }}
+                        </td>
+
+                        <!-- ⭐ STATUS -->
+                        <td>
+                          {% if v.sent_to_patient %}
+                          <span
+                            class="badge bg-success d-flex align-items-center gap-1"
+                          >
+                            <i class="bi bi-check-circle"></i> Sent
+                          </span>
+                          {% else %}
+                          <span
+                            class="badge bg-warning text-dark d-flex align-items-center gap-1"
+                          >
+                            <i class="bi bi-clock-history"></i> Not Sent
+                          </span>
+                          {% endif %}
+                        </td>
+
+                        <!-- ⭐ ACTION BUTTON -->
+                        <td>
+                          {% if not v.sent_to_patient %}
+                          <a
+                            href="{% url 'send_update_to_patient' v.id %}"
+                            class="btn btn-sm btn-primary d-flex align-items-center gap-1"
+                            title="Send latest QR + Hash to Patient"
+                          >
+                            <i class="bi bi-send"></i> Send Update
+                          </a>
+                          {% else %}
+                          <button
+                            class="btn btn-sm btn-secondary d-flex align-items-center gap-1"
+                            disabled
+                          >
+                            <i class="bi bi-check2-circle"></i> Sent
+                          </button>
+                          {% endif %}
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+                {% else %}
+                <p class="text-center text-muted">
+                  No updated records available.
+                </p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      /* ============================================================
+         GLOBAL VARIABLES
+      ============================================================ */
+      let codeReader = null;
+      let videoStream = null;
+      let selectedDeviceId = null;
+      let isScanning = false;
+
+      /* ============================================================
+         CAMERA SUPPORT CHECK
+      ============================================================ */
+      function checkCameraSupport() {
+        const debugDiv = document.getElementById("camera-debug");
+        const isLocalhost =
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1";
+        const isSecure = window.location.protocol === "https:" || isLocalhost;
+
+        const info = `
+          <strong>Camera Support Status:</strong><br>
+          • Current URL: ${window.location.href}<br>
+          • Protocol: ${window.location.protocol}<br>
+          • Hostname: ${window.location.hostname}<br>
+          • Is Localhost: ${isLocalhost}<br>
+          • Is Secure Context: ${isSecure}<br>
+          • Media Devices API: ${!!navigator.mediaDevices}<br>
+          • GetUserMedia: ${!!(
+            navigator.mediaDevices && navigator.mediaDevices.getUserMedia
+          )}<br>
+          • Scanner Active: ${isScanning}
+        `;
+
+        debugDiv.innerHTML = info;
+
+        if (!isSecure) {
+          debugDiv.innerHTML += `<br><br><div class="alert alert-warning p-2">
+            <strong>⚠️ Security Warning:</strong><br>
+            Camera requires HTTPS or localhost.<br>
+            Please access via: <code>http://localhost:8000</code>
+          </div>`;
+        }
+      }
+
+      /* ============================================================
+         GET CAMERAS
+      ============================================================ */
+      async function getCameras() {
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter(
+            (device) => device.kind === "videoinput"
+          );
+          const cameraSelect = document.getElementById("camera-select");
+
+          cameraSelect.innerHTML = '<option value="">Select Camera</option>';
+          videoDevices.forEach((device, index) => {
+            const option = document.createElement("option");
+            option.value = device.deviceId;
+            option.text = device.label || `Camera ${index + 1}`;
+            cameraSelect.appendChild(option);
+          });
+
+          if (videoDevices.length > 0) {
+            selectedDeviceId = videoDevices[0].deviceId;
+            cameraSelect.value = selectedDeviceId;
+          }
+
+          cameraSelect.addEventListener("change", function () {
+            selectedDeviceId = this.value;
+            if (isScanning) {
+              stopScanner();
+              setTimeout(() => startScanner(), 500);
+            }
+          });
+        } catch (err) {
+          console.error("Error getting cameras:", err);
+        }
+      }
+
+      /* ============================================================
+         START SCANNER
+      ============================================================ */
+      async function startScanner() {
+        const video = document.getElementById("qr-video");
+        const resultsContainer = document.getElementById("scanner-results");
+        const debugDiv = document.getElementById("camera-debug");
+
+        // Check if we're in a secure context (localhost or HTTPS)
+        const isLocalhost =
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1";
+        const isSecure = window.location.protocol === "https:" || isLocalhost;
+
+        if (!isSecure) {
+          debugDiv.innerHTML = `<div class="alert alert-danger p-2">
+            <strong>Camera access requires HTTPS or localhost.</strong><br>
+            Please access via: <code>http://localhost:8000</code><br>
+            <small>Instead of: ${window.location.href}</small>
+          </div>`;
+          return;
+        }
+
+        // Check for camera support
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          debugDiv.innerHTML = `<div class="alert alert-danger p-2">
+            Camera API not supported in this browser.
+          </div>`;
+          return;
+        }
+
+        try {
+          // Stop any existing stream
+          stopScanner();
+
+          // Get camera access
+          const constraints = {
+            video: {
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              facingMode: "environment", // Prefer back camera
+            },
+          };
+
+          // Use selected device if available
+          if (selectedDeviceId) {
+            constraints.video.deviceId = { exact: selectedDeviceId };
+          }
+
+          videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+          video.srcObject = videoStream;
+          video.setAttribute("playsinline", true);
+          video.style.display = "block";
+
+          // Wait for video to be ready
+          await new Promise((resolve) => {
+            video.onloadedmetadata = () => {
+              video.play();
+              resolve();
+            };
+          });
+
+          // Initialize ZXing QR reader
+          const { BrowserQRCodeReader } = ZXing;
+          codeReader = new BrowserQRCodeReader();
+
+          // Start scanning
+          codeReader.decodeFromVideoDevice(
+            selectedDeviceId || undefined,
+            video,
+            (result, err) => {
+              if (result) {
+                console.log("QR Code detected:", result.text);
+                displayPatientInfo(result.text);
+                stopScanner();
+              }
+              if (err && !(err instanceof ZXing.NotFoundException)) {
+                console.error("QR Scanner error:", err);
+              }
+            }
+          );
+
+          isScanning = true;
+
+          resultsContainer.innerHTML = `
+            <div class="alert alert-success">
+              <i class="bi bi-check-circle me-2"></i>
+              <strong>Camera active!</strong><br>
+              Point camera at patient's QR code to scan.
+            </div>
+          `;
+
+          debugDiv.innerHTML = `<div class="alert alert-success p-2">
+            <i class="bi bi-check-circle"></i> Camera active and scanning...
+          </div>`;
+        } catch (error) {
+          console.error("Camera error:", error);
+
+          let errorMessage = error.message;
+          if (
+            error.name === "NotAllowedError" ||
+            error.name === "PermissionDeniedError"
+          ) {
+            errorMessage =
+              "Camera permission denied. Please allow camera access in your browser settings.";
+          } else if (error.name === "NotFoundError") {
+            errorMessage = "No camera found on this device.";
+          } else if (error.name === "NotReadableError") {
+            errorMessage = "Camera is already in use by another application.";
+          } else if (error.name === "OverconstrainedError") {
+            errorMessage = "Camera constraints could not be satisfied.";
+          }
+
+          debugDiv.innerHTML = `<div class="alert alert-danger p-2">
+            <strong>Camera Error:</strong><br>${errorMessage}
+          </div>`;
+
+          resultsContainer.innerHTML = `
+            <div class="alert alert-danger">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              <strong>Camera Error</strong><br>
+              ${errorMessage}
+            </div>
+          `;
+
+          video.style.display = "none";
+          isScanning = false;
+        }
+      }
+
+      /* ============================================================
+         STOP SCANNER
+      ============================================================ */
+      function stopScanner() {
+        const video = document.getElementById("qr-video");
+        const debugDiv = document.getElementById("camera-debug");
+
+        if (codeReader) {
+          codeReader.reset();
+          codeReader = null;
+        }
+
+        if (videoStream) {
+          videoStream.getTracks().forEach((track) => track.stop());
+          videoStream = null;
+        }
+
+        if (video) {
+          video.srcObject = null;
+          video.style.display = "none";
+        }
+
+        isScanning = false;
+        debugDiv.innerHTML = `<div class="alert alert-info p-2">
+          <i class="bi bi-info-circle"></i> Camera stopped
+        </div>`;
+      }
+
+      /* ============================================================
+         DISPLAY PATIENT INFO
+      ============================================================ */
+      function displayPatientInfo(qrData) {
+        const resultsContainer = document.getElementById("scanner-results");
+
+        try {
+          const data = JSON.parse(qrData);
+          const patient =
+            data.full_history && data.full_history[0]
+              ? data.full_history[0]
+              : data;
+
+          resultsContainer.innerHTML = `
+            <div class="patient-info-card p-3">
+              <h4 class="mb-3"><i class="bi bi-person-circle me-2"></i>Patient Details</h4>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <strong>Name:</strong> ${patient.full_name || "N/A"}
+                  </div>
+                  <div class="info-item">
+                    <strong>Age:</strong> ${patient.age || "N/A"}
+                  </div>
+                  <div class="info-item">
+                    <strong>Gender:</strong> ${patient.gender || "N/A"}
+                  </div>
+                  <div class="info-item">
+                    <strong>Email:</strong> ${patient.email || "N/A"}
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <strong>Phone:</strong> ${patient.phone || "N/A"}
+                  </div>
+                  <div class="info-item">
+                    <strong>Address:</strong> ${patient.address || "N/A"}
+                  </div>
+                  <div class="info-item">
+                    <strong>Disease:</strong> ${patient.disease || "N/A"}
+                  </div>
+                  <div class="info-item">
+                    <strong>Doctor:</strong> ${patient.doctor_assigned || "N/A"}
+                  </div>
+                </div>
+              </div>
+
+              <hr>
+              
+              <div class="mt-3">
+                <h6><i class="bi bi-shield-check me-2"></i>Blockchain Verification</h6>
+                <div class="bg-light p-2 rounded">
+                  <code style="font-size: 12px; word-break: break-all;">
+                    ${data.final_blockchain_hash || "No hash found"}
+                  </code>
+                </div>
+              </div>
+
+              <div class="mt-3">
+                <button class="btn btn-primary" onclick="verifyScannedHash('${
+                  data.final_blockchain_hash || ""
+                }')">
+                  <i class="bi bi-shield-check me-2"></i>Verify This Hash
+                </button>
+                <button class="btn btn-secondary ms-2" onclick="startScanner()">
+                  <i class="bi bi-camera me-2"></i>Scan Another
+                </button>
+              </div>
+            </div>
+          `;
+        } catch (error) {
+          console.error("Error parsing QR data:", error);
+          resultsContainer.innerHTML = `
+            <div class="alert alert-danger">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              <strong>Invalid QR Code Format</strong><br>
+              <small>Scanned data: ${qrData.substring(
+                0,
+                100
+              )}...</small><br><br>
+              <button class="btn btn-sm btn-primary" onclick="startScanner()">
+                <i class="bi bi-camera me-2"></i>Try Again
+              </button>
+            </div>
+          `;
+        }
+      }
+
+      /* ============================================================
+         VERIFY SCANNED HASH
+      ============================================================ */
+      function verifyScannedHash(hash) {
+        if (!hash) {
+          alert("No hash found in scanned data");
+          return;
+        }
+
+        document.getElementById("patientHash").value = hash;
+        showSection("schedule");
+        setTimeout(verifyHash, 500);
+      }
+
+      /* ============================================================
+         DASHBOARD NAVIGATION
+      ============================================================ */
+      function showSection(sectionId, evt = null) {
+        // Stop scanner when switching sections
+        if (sectionId !== "appointments") {
+          stopScanner();
+        }
+
+        document.querySelectorAll(".nav-link").forEach((link) => {
+          link.classList.remove("active");
+        });
+        if (evt && evt.currentTarget) evt.currentTarget.classList.add("active");
+
+        document.querySelectorAll(".content-section").forEach((section) => {
+          section.classList.remove("active");
+        });
+
+        document.getElementById(sectionId).classList.add("active");
+
+        if (window.innerWidth < 768) toggleSidebar();
+
+        // Initialize cameras when appointments section is shown
+        if (sectionId === "appointments") {
+          setTimeout(() => {
+            getCameras();
+            checkCameraSupport();
+          }, 100);
+        }
+      }
+
+      function toggleSidebar() {
+        document.getElementById("sidebarMenu").classList.toggle("show");
+      }
+
+      /* ============================================================
+         PATIENT SELECTION LOGIC
+      ============================================================ */
+      function selectPatient(patientId, patientName) {
+        document
+          .querySelectorAll(".patient-card")
+          .forEach((card) => card.classList.remove("selected"));
+
+        document
+          .getElementById(`patient-card-${patientId}`)
+          .classList.add("selected");
+
+        document.getElementById("patient_id").value = patientId;
+        document.getElementById(
+          "patient-form-title"
+        ).textContent = `Update Record for ${patientName}`;
+
+        document.getElementById("patient-update-form").style.display = "block";
+
+        const today = new Date().toISOString().split("T")[0];
+        document.getElementById("visit_date").value = today;
+
+        const followUp = new Date();
+        followUp.setDate(followUp.getDate() + 7);
+        document.getElementById("follow_up_date").value = followUp
+          .toISOString()
+          .split("T")[0];
+
+        document
+          .getElementById("patient-update-form")
+          .scrollIntoView({ behavior: "smooth" });
+      }
+
+      /* ============================================================
+         PRESCRIPTION IMAGE PREVIEW + FORM SUBMIT
+      ============================================================ */
+      document.addEventListener("DOMContentLoaded", function () {
+        // Initialize camera support check
+        checkCameraSupport();
+
+        const imgInput = document.getElementById("prescription_image");
+        if (imgInput) {
+          imgInput.addEventListener("change", (e) => {
+            const f = e.target.files[0];
+            if (!f) return;
+
+            const r = new FileReader();
+            r.onload = (ev) => {
+              const img = document.getElementById("prescription-image-preview");
+              img.src = ev.target.result;
+              img.style.display = "block";
+            };
+            r.readAsDataURL(f);
+          });
+        }
+
+        const form = document.getElementById("patient-record-form");
+        if (form) {
+          form.addEventListener("submit", function () {
+            const btn = this.querySelector("button[type='submit']");
+            if (btn) {
+              btn.disabled = true;
+              btn.innerHTML =
+                '<i class="bi bi-hourglass-split me-2"></i>Saving...';
+            }
+          });
+        }
+
+        // Auto-hide alerts
+        setTimeout(() => {
+          document.querySelectorAll(".alert").forEach((alert) => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+          });
+        }, 5000);
+      });
+
+      /* ============================================================
+         HASH VERIFICATION
+      ============================================================ */
+      function verifyHash() {
+        const hash = document.getElementById("patientHash").value.trim();
+        const result = document.getElementById("verification-result");
+
+        if (!hash) {
+          result.innerHTML = `<div class="alert alert-warning">Please enter a hash to verify</div>`;
+          result.style.display = "block";
+          return;
+        }
+
+        if (hash.length !== 64) {
+          result.innerHTML = `<div class="alert alert-danger">Invalid SHA-256 hash length (should be 64 characters)</div>`;
+          result.style.display = "block";
+          return;
+        }
+
+        result.innerHTML = `
+          <div class="alert alert-info">
+            <i class="bi bi-hourglass-split me-2"></i>
+            <strong>Verifying on blockchain...</strong><br>
+            <small>Checking data integrity...</small>
+          </div>
+        `;
+        result.style.display = "block";
+
+        // Simulate blockchain verification
+        setTimeout(() => {
+          const isHashValid = Math.random() > 0.3; // 70% chance of valid hash
+          if (isHashValid) {
+            result.innerHTML = `
+              <div class="alert alert-success">
+                <i class="bi bi-shield-check me-2"></i>
+                <strong>✓ Hash Verified Successfully</strong><br>
+                <small>Data integrity confirmed on blockchain</small>
+                <div class="mt-2">
+                  <code style="font-size: 12px; word-break: break-all;">${hash}</code>
+                </div>
+                <div class="mt-2">
+                  <button class="btn btn-sm btn-outline-success" onclick="copyToClipboard('${hash}')">
+                    <i class="bi bi-copy me-1"></i>Copy Hash
+                  </button>
+                </div>
+              </div>
+            `;
+          } else {
+            result.innerHTML = `
+              <div class="alert alert-danger">
+                <i class="bi bi-shield-exclamation me-2"></i>
+                <strong>✗ Hash Verification Failed</strong><br>
+                <small>Data may have been tampered with or doesn't exist on blockchain</small>
+              </div>
+            `;
+          }
+        }, 1500);
+      }
+
+      /* ============================================================
+         UTILITY FUNCTIONS
+      ============================================================ */
+      function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+          alert("Hash copied to clipboard!");
+        });
+      }
+
+      /* ============================================================
+         MOBILE UX
+      ============================================================ */
+      document.addEventListener("click", (event) => {
+        const sidebar = document.getElementById("sidebarMenu");
+        const menuBtn = document.querySelector(".mobile-menu-btn");
+
+        if (
+          window.innerWidth < 768 &&
+          !sidebar.contains(event.target) &&
+          (!menuBtn || !menuBtn.contains(event.target)) &&
+          sidebar.classList.contains("show")
+        ) {
+          sidebar.classList.remove("show");
+        }
+      });
+
+      // Stop scanner when page is hidden
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) {
+          stopScanner();
+        }
+      });
+
+      // Stop scanner before page unload
+      window.addEventListener("beforeunload", function () {
+        stopScanner();
+      });
+
+      // Initialize when appointments section loads
+      document.addEventListener("DOMContentLoaded", function () {
+        // Check if we're already in appointments section
+        if (window.location.hash === "#appointments") {
+          getCameras();
+        }
+
+        // Add event listener for camera select
+        const cameraSelect = document.getElementById("camera-select");
+        if (cameraSelect) {
+          cameraSelect.addEventListener("change", function () {
+            if (isScanning) {
+              stopScanner();
+              setTimeout(() => startScanner(), 500);
+            }
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
